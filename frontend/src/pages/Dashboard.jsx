@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import api from '../utils/api';
 import { Edit, Trash2, PlusCircle, BookOpen } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const Dashboard = () => {
     const [articles, setArticles] = useState([]);
@@ -21,14 +22,53 @@ const Dashboard = () => {
         fetchMyArticles();
     }, []);
 
-    const handleDelete = async (id) => {
-        if (!window.confirm('Are you sure you want to delete this article?')) return;
-        try {
-            await api.delete(`/articles/${id}`);
-            setArticles(articles.filter(a => a.id !== id));
-        } catch (err) {
-            alert('Failed to delete article');
-        }
+    const handleDelete = (id) => {
+        toast((t) => (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '0.5rem' }}>
+                <span style={{ fontWeight: 600, color: '#1e293b' }}>
+                    Permanently delete this article?
+                </span>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                        onClick={async () => {
+                            toast.dismiss(t.id);
+                            const loadingToast = toast.loading('Deleting...');
+                            try {
+                                await api.delete(`/articles/${id}`);
+                                setArticles(articles.filter(a => a.id !== id));
+                                toast.success('Article removed', { id: loadingToast });
+                            } catch (err) {
+                                toast.error('Failed to delete', { id: loadingToast });
+                            }
+                        }}
+                        style={{
+                            padding: '0.4rem 0.8rem',
+                            background: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '0.4rem',
+                            cursor: 'pointer',
+                            fontWeight: 600
+                        }}
+                    >
+                        Yes, Delete
+                    </button>
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        style={{
+                            padding: '0.4rem 0.8rem',
+                            background: '#e2e8f0',
+                            color: '#475569',
+                            border: 'none',
+                            borderRadius: '0.4rem',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        ), { duration: 5000, position: 'top-center' });
     };
 
     return (
